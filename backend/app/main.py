@@ -155,6 +155,8 @@ async def risk_by_city(
     request: Request,
     uf: str = Query(..., min_length=2, max_length=2),
     city: str = Query(..., min_length=1),
+    forecast_days: int = Query(1, ge=1, le=7, description="Número de dias de previsão (1-7)"),
+    date: Optional[str] = Query(None, description="Filtrar por data (YYYY-MM-DD)"),
 ):
     uf = uf.upper()
 
@@ -176,7 +178,13 @@ async def risk_by_city(
     lat = float(nomi[0]["lat"])
     lon = float(nomi[0]["lon"])
 
-    hourly = await fetch_hourly_forecast(lat=lat, lon=lon)
+    hourly = await fetch_hourly_forecast(lat=lat, lon=lon, forecast_days=forecast_days)
+
+    # Filtra por data se especificado
+    if date:
+        from .services.weather_client import filter_forecast_by_date
+        hourly = filter_forecast_by_date(hourly, date)
+
     result = compute_risk(hourly)
     result["location"] = {"uf": uf, "city": city, "lat": lat, "lon": lon}
     return JSONResponse(result)
@@ -254,6 +262,60 @@ async def regions(
         return JSONResponse(gj)
     except Exception as e:
         raise HTTPException(500, detail=f"Erro ao carregar regiões: {e}")
+
+# ---------------------------------------------------------------------
+# Áreas de risco (GeoJSON) - filtrável por dia e intensidade
+# ---------------------------------------------------------------------
+@app.get("/risk/areas")
+@limiter.limit(RATE_LIMIT)
+async def risk_areas(
+    request: Request,
+    lat: float = Query(..., description="Latitude do centro"),
+    lon: float = Query(..., description="Longitude do centro"),
+    radius: float = Query(10.0, ge=1, le=50, description="Raio em km (1-50)"),
+    risk_level: Optional[str] = Query(
+        None,
+        pattern="^(low|medium|high)$",
+        description="Filtro por nível de risco",
+    ),
+    date: Optional[str] = Query(
+        None,
+        description="Data da previsão (YYYY-MM-DD)",
+    ),
+    zoom: Optional[int] = Query(
+        None,
+        ge=1,
+        le=20,
+        description="Nível de zoom (simplifica para zoom < 12)",
+    ),
+):
+    """
+    Retorna GeoJSON com polígonos de áreas de risco de alagamento.
+
+    Filtros:
+    - lat/lon: centro da busca
+    - radius: raio em km
+    - risk_level: low, medium ou high
+    - date: data de previsão (afeta o risco calculado)
+    - zoom: se < 12, retorna versão simplificada
+    """
+    try:
+        from .services.risk_areas import get_risk_areas_geojson, get_simplified_risk_areas
+
+        if zoom and zoom < 12:
+            gj = get_simplified_risk_areas(lat=lat, lon=lon, zoom_level=zoom)
+        else:
+            gj = get_risk_areas_geojson(
+                lat=lat,
+                lon=lon,
+                radius_km=radius,
+                risk_level=risk_level,
+                date=date,
+            )
+
+        return JSONResponse(gj)
+    except Exception as e:
+        raise HTTPException(500, detail=f"Erro ao carregar áreas de risco: {e}")
 
 # ---------------------------------------------------------------------
 # Servir Flutter Web na raiz
