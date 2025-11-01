@@ -141,8 +141,8 @@ class _CityPickerScreenState extends State<CityPickerScreen> {
                           },
                           child: ListTile(
                             leading: const Icon(Icons.location_on_outlined),
-                            title: Text(item['city'] ?? ''
-                            subtitle: Text(item['displayName'] ?? ''
+                            title: Text(item['city'] ?? ''),
+                            subtitle: Text(item['displayName'] ?? ''),
                           ),
                         );
                       },
