@@ -1,0 +1,39 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "nome": "Recife",
+        "uf": "PE"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -35.05,
+              -8.0
+            ],
+            [
+              -35.05,
+              -8.2
+            ],
+            [
+              -34.8,
+              -8.2
+            ],
+            [
+              -34.8,
+              -8.0
+            ],
+            [
+              -35.05,
+              -8.0
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

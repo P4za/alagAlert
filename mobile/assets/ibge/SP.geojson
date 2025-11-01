@@ -1,0 +1,141 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "nome": "Campinas",
+        "uf": "SP"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -47.15,
+              -22.8
+            ],
+            [
+              -47.15,
+              -23.0
+            ],
+            [
+              -46.95,
+              -23.0
+            ],
+            [
+              -46.95,
+              -22.8
+            ],
+            [
+              -47.15,
+              -22.8
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "nome": "São Paulo",
+        "uf": "SP"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -46.8,
+              -23.4
+            ],
+            [
+              -46.8,
+              -23.7
+            ],
+            [
+              -46.4,
+              -23.7
+            ],
+            [
+              -46.4,
+              -23.4
+            ],
+            [
+              -46.8,
+              -23.4
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "nome": "Santos",
+        "uf": "SP"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -46.43,
+              -23.88
+            ],
+            [
+              -46.43,
+              -24.04
+            ],
+            [
+              -46.24,
+              -24.04
+            ],
+            [
+              -46.24,
+              -23.88
+            ],
+            [
+              -46.43,
+              -23.88
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "nome": "Guarulhos",
+        "uf": "SP"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -46.64,
+              -23.35
+            ],
+            [
+              -46.64,
+              -23.55
+            ],
+            [
+              -46.4,
+              -23.55
+            ],
+            [
+              -46.4,
+              -23.35
+            ],
+            [
+              -46.64,
+              -23.35
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

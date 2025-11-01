@@ -1,6 +1,6 @@
 // lib/screens/city_picker_screen.dart
 import 'package:flutter/material.dart';
-import '../services/geocode_service.dart';
+import '../services/ibge_service.dart';
 
 // Lista estática de UFs para o Dropdown
 const List<String> _ufs = [
@@ -89,19 +89,20 @@ class _CityPickerScreenState extends State<CityPickerScreen> {
           const Text('Cidade (digite para buscar)'),
           const SizedBox(height: 8),
           
-          // --- Autocomplete para Cidade (Busca Dinâmica) ---
+          // --- Autocomplete para Cidade (Busca pela API IBGE) ---
           Autocomplete<Map<String, String>>(
             optionsBuilder: (TextEditingValue textEditingValue) async {
-              if (_selectedUf == null || _selectedUf!.isEmpty || textEditingValue.text.trim().isEmpty) {
+              if (_selectedUf == null || _selectedUf!.isEmpty) {
                 return const Iterable<Map<String, String>>.empty();
               }
-              // Chama o serviço de busca dinâmica (que sabemos que funciona no backend)
-              return await GeocodeService.suggestCities(
-                query: textEditingValue.text,
+              // Busca direto na API do IBGE (não depende do backend)
+              final cities = await IbgeService.searchCities(
                 uf: _selectedUf!,
+                query: textEditingValue.text,
               );
+              return cities.take(20); // Limita a 20 resultados
             },
-            displayStringForOption: (Map<String, String> option) => option['city'] ?? '',
+            displayStringForOption: (Map<String, String> option) => option['nome'] ?? '',
 
             fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
               textEditingController.text = _cityCtl.text;
@@ -141,8 +142,8 @@ class _CityPickerScreenState extends State<CityPickerScreen> {
                           },
                           child: ListTile(
                             leading: const Icon(Icons.location_on_outlined),
-                            title: Text(item['city'] ?? ''),
-                            subtitle: Text(item['displayName'] ?? ''),
+                            title: Text(item['nome'] ?? ''),
+                            subtitle: Text('${item['nome']} - $_selectedUf'),
                           ),
                         );
                       },
@@ -153,7 +154,7 @@ class _CityPickerScreenState extends State<CityPickerScreen> {
             },
 
             onSelected: (Map<String, String> item) {
-              _selectedCity = item['city'];
+              _selectedCity = item['nome'];
               _cityCtl.text = _selectedCity ?? '';
               setState(() {});
             },

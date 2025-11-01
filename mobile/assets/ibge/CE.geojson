@@ -1,0 +1,39 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "nome": "Fortaleza",
+        "uf": "CE"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -38.65,
+              -3.6
+            ],
+            [
+              -38.65,
+              -3.9
+            ],
+            [
+              -38.35,
+              -3.9
+            ],
+            [
+              -38.35,
+              -3.6
+            ],
+            [
+              -38.65,
+              -3.6
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
