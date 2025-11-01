@@ -293,7 +293,7 @@ class _EnhancedMapScreenState extends State<EnhancedMapScreen> {
               style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            value: _selectedRiskLevel == null
+            initialValue: _selectedRiskLevel == null
                 ? 'Todos'
                 : _selectedRiskLevel == 'low'
                     ? 'Baixo'
