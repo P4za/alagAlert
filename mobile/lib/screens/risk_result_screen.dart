@@ -398,10 +398,9 @@ class _RiskResultScreenState extends State<RiskResultScreen> {
           height: 48,
           child: FilledButton.tonal(
             onPressed: () {
-              // TODO: navegar para o mapa (ajuste conforme sua MapScreen)
               Navigator.of(context).pop();
             },
-            child: const Text('Abrir Mapa por UF'),
+            child: const Text('Voltar'),
           ),
         ),
       ],
