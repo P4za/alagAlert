@@ -352,8 +352,8 @@ class _EnhancedMapScreenState extends State<EnhancedMapScreen> {
             ),
             onPositionChanged: (position, hasGesture) {
               // Atualiza zoom para simplificação
-              if (hasGesture && position.zoom != null) {
-                _zoom = position.zoom!;
+              if (hasGesture) {
+                _zoom = position.zoom;
               }
             },
           ),

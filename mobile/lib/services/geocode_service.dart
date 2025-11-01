@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import './api_service.dart';
@@ -7,10 +6,6 @@ class GeocodeService {
   // Cache em memória para evitar requisições duplicadas
   static final Map<String, _CacheEntry> _cache = {};
   static const Duration _cacheDuration = Duration(minutes: 15);
-
-  // Timer para debounce
-  static Timer? _debounceTimer;
-  static const Duration _debounceDuration = Duration(milliseconds: 400);
 
   /// Limpa entradas expiradas do cache
   static void _cleanExpiredCache() {
