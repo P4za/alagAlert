@@ -93,12 +93,19 @@ class _MapScreenState extends State<MapScreen> {
         final span = latSpan > lonSpan ? latSpan : lonSpan;
 
         double z;
-        if (span > 25) z = 4.0;
-        else if (span > 12) z = 5.0;
-        else if (span > 6) z = 6.0;
-        else if (span > 3) z = 7.0;
-        else if (span > 1.5) z = 8.0;
-        else z = 9.0;
+        if (span > 25) {
+          z = 4.0;
+        } else if (span > 12) {
+          z = 5.0;
+        } else if (span > 6) {
+          z = 6.0;
+        } else if (span > 3) {
+          z = 7.0;
+        } else if (span > 1.5) {
+          z = 8.0;
+        } else {
+          z = 9.0;
+        }
         _zoom = z;
       } else {
         _center = const LatLng(-14.235, -51.9253);
