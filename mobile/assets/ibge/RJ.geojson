@@ -1,0 +1,73 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "nome": "Rio de Janeiro",
+        "uf": "RJ"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -43.4,
+              -22.8
+            ],
+            [
+              -43.4,
+              -23.1
+            ],
+            [
+              -43.05,
+              -23.1
+            ],
+            [
+              -43.05,
+              -22.8
+            ],
+            [
+              -43.4,
+              -22.8
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "nome": "Niterói",
+        "uf": "RJ"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -43.19,
+              -22.8
+            ],
+            [
+              -43.19,
+              -22.98
+            ],
+            [
+              -42.98,
+              -22.98
+            ],
+            [
+              -42.98,
+              -22.8
+            ],
+            [
+              -43.19,
+              -22.8
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "nome": "Brasília",
+        "uf": "DF"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -48.05,
+              -15.6
+            ],
+            [
+              -48.05,
+              -15.95
+            ],
+            [
+              -47.7,
+              -15.95
+            ],
+            [
+              -47.7,
+              -15.6
+            ],
+            [
+              -48.05,
+              -15.6
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
