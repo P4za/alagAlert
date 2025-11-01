@@ -15,7 +15,7 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   final MapController _map = MapController();
 
-  List<Polygon<Object>> _polygons = const [];
+  List<Polygon> _polygons = const [];
   LatLng _center = const LatLng(-14.235, -51.9253); // Brasil
   double _zoom = 5.0;
   bool _loading = true;
@@ -44,7 +44,7 @@ class _MapScreenState extends State<MapScreen> {
           ? (data['features'] as List)
           : (data['type'] == 'Feature' ? [data] : <dynamic>[]);
 
-      final polygons = <Polygon<Object>>[];
+      final polygons = <Polygon>[];
       final allPts = <LatLng>[];
 
       for (final f in features) {
@@ -142,14 +142,13 @@ class _MapScreenState extends State<MapScreen> {
     return rings;
   }
 
-  Polygon<Object> _mkPolygon(List<LatLng> pts) {
-    return Polygon<Object>(
+  Polygon _mkPolygon(List<LatLng> pts) {
+    return Polygon(
       points: pts,
       color: Colors.deepPurple.withOpacity(0.15), // fill
       borderColor: Colors.deepPurple,             // stroke
       borderStrokeWidth: 1.0,
     );
-    // ⚠️ Sem 'isFilled' ou 'isDotted' no flutter_map 8.x
   }
 
   @override

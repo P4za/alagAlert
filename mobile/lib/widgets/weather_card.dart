@@ -7,13 +7,14 @@ class WeatherCard extends StatelessWidget {
 
   Widget _tile(BuildContext ctx, WeatherPoint p) {
     final t = TimeOfDay.fromDateTime(p.timestamp);
+    final formattedTime = MaterialLocalizations.of(ctx).formatTimeOfDay(t);
     return Expanded(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.cloud, size: 28),
           const SizedBox(height: 6),
-          Text("${t.format(ctx)}", style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text(formattedTime, style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Text("${(p.precipitation ?? 0).toStringAsFixed(1)} mm"),
           Text("${(p.windSpeed ?? 0).toStringAsFixed(0)} km/h"),
