@@ -148,7 +148,7 @@ class _EnhancedMapScreenState extends State<EnhancedMapScreen> {
 
     return Polygon(
       points: points,
-      color: color.withOpacity(0.3),
+      color: color.withValues(alpha: 0.3),
       borderColor: color,
       borderStrokeWidth: 2.0,
     );
@@ -260,7 +260,7 @@ class _EnhancedMapScreenState extends State<EnhancedMapScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -383,7 +383,7 @@ class _EnhancedMapScreenState extends State<EnhancedMapScreen> {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
+                  color: Colors.black.withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Row(
@@ -420,7 +420,7 @@ class _EnhancedMapScreenState extends State<EnhancedMapScreen> {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.9),
+            color: Colors.white.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Colors.black12),
           ),
@@ -459,7 +459,7 @@ class _EnhancedMapScreenState extends State<EnhancedMapScreen> {
             width: 16,
             height: 16,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.3),
+              color: color.withValues(alpha: 0.3),
               border: Border.all(color: color, width: 2),
               borderRadius: BorderRadius.circular(3),
             ),

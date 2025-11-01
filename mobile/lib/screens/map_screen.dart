@@ -145,7 +145,7 @@ class _MapScreenState extends State<MapScreen> {
   Polygon _mkPolygon(List<LatLng> pts) {
     return Polygon(
       points: pts,
-      color: Colors.deepPurple.withOpacity(0.15), // fill
+      color: Colors.deepPurple.withValues(alpha: 0.15), // fill
       borderColor: Colors.deepPurple,             // stroke
       borderStrokeWidth: 1.0,
     );
@@ -210,7 +210,7 @@ class _Legend extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(.9),
+            color: Colors.white.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: Colors.black12),
           ),
@@ -221,7 +221,7 @@ class _Legend extends StatelessWidget {
                 width: 14,
                 height: 14,
                 decoration: BoxDecoration(
-                  color: Colors.deepPurple.withOpacity(0.25),
+                  color: Colors.deepPurple.withValues(alpha: 0.25),
                   border: Border.all(color: Colors.deepPurple),
                   borderRadius: BorderRadius.circular(3),
                 ),
