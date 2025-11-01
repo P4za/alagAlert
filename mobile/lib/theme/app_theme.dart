@@ -69,8 +69,8 @@ ThemeData buildTheme(Brightness brightness) {
 
     chipTheme: ChipThemeData(
       backgroundColor: isDark
-          ? colorScheme.primaryContainer.withOpacity(0.18)
-          : colorScheme.primaryContainer.withOpacity(0.30),
+          ? colorScheme.primaryContainer.withValues(alpha: 0.18)
+          : colorScheme.primaryContainer.withValues(alpha: 0.30),
       labelStyle: TextStyle(
         color: colorScheme.onPrimaryContainer,
         fontWeight: FontWeight.w600,
@@ -84,7 +84,7 @@ ThemeData buildTheme(Brightness brightness) {
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: colorScheme.surface,
-      hintStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.6)),
+      hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6)),
       labelStyle: TextStyle(color: colorScheme.onSurface),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../services/geocode_service.dart';
+import '../services/api_service.dart';
 
 class RiskResultScreen extends StatefulWidget {
   const RiskResultScreen({super.key, required this.uf, required this.city});
@@ -41,7 +41,7 @@ class _RiskResultScreenState extends State<RiskResultScreen> {
       final cleanUf = _cleanUf(widget.uf).trim();
       final cleanCity = widget.city.trim();
 
-      final uri = Uri.parse('${GeocodeService.baseUrl}/risk/by-city')
+      final uri = Uri.parse('${ApiService.baseUrl}/risk/by-city')
           .replace(queryParameters: {'uf': cleanUf, 'city': cleanCity});
 
       final res = await http.get(uri);
@@ -524,7 +524,7 @@ class _MetricChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withOpacity(.08),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
