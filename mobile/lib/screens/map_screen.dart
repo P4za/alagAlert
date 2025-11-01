@@ -117,7 +117,12 @@ class _MapScreenState extends State<MapScreen> {
         _loading = false;
       });
 
-      _map.move(_center, _zoom);
+      // Move o mapa após o próximo frame (quando FlutterMap já estiver renderizado)
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _map.move(_center, _zoom);
+        }
+      });
     } catch (e) {
       setState(() {
         _error = 'Falha ao carregar GeoJSON de ${widget.uf}: $e';
