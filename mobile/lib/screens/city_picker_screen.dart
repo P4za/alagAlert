@@ -63,7 +63,7 @@ class _CityPickerScreenState extends State<CityPickerScreen> {
           
           // --- Dropdown para Estado (Lista Estática) ---
           DropdownButtonFormField<String>(
-            value: _selectedUf,
+            initialValue: _selectedUf,
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
               hintText: 'Selecione o Estado',

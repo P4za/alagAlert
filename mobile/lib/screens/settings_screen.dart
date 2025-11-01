@@ -18,7 +18,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           DropdownButtonFormField<ThemeMode>(
-            value: _mode,
+            initialValue: _mode,
             decoration: const InputDecoration(labelText: "Tema"),
             items: const [
               DropdownMenuItem(value: ThemeMode.system, child: Text("Sistema")),

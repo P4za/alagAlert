@@ -23,10 +23,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String? _selectedUf;        // ex.: "SP"
-  String? _selectedStateName; // ex.: "São Paulo"
   String? _selectedCity;      // ex.: "Santos"
 
-  bool _loadingRisk = false;
+  final bool _loadingRisk = false;
 
   Future<void> _verRisco() async {
     final uf = _cleanUf(_selectedUf);
@@ -40,9 +39,13 @@ class _HomeScreenState extends State<HomeScreen> {
       _showSnack('Digite e selecione uma cidade.');
       return;
     }
-    if (_loadingRisk) return;
+    if (_loadingRisk) {
+      return;
+    }
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => RiskResultScreen(uf: uf, city: city)),
     );
@@ -97,7 +100,6 @@ class _HomeScreenState extends State<HomeScreen> {
         final stateName = s['state']?.toString() ?? '';
         setState(() {
           _selectedUf = uf;
-          _selectedStateName = stateName;
           _selectedCity = null;
         });
         _cityFieldCtrl?.clear();
