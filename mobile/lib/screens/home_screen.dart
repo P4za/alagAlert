@@ -77,8 +77,6 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (_) => RiskResultScreen(
           uf: uf,
           city: city,
-          lat: _selectedLat,
-          lon: _selectedLon,
         ),
       ),
     );
