@@ -68,6 +68,11 @@ class IbgeService {
 
   /// Remove acentos para facilitar busca
   static String _removeDiacritics(String str) {
+    return removeDiacriticsPublic(str);
+  }
+
+  /// Remove acentos para facilitar busca (versão pública)
+  static String removeDiacriticsPublic(String str) {
     final withDiacritics = 'áàâãäéèêëíìîïóòôõöúùûüçñÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑ';
     final withoutDiacritics = 'aaaaaeeeeiiiiooooouuuucnAAAAAEEEEIIIIOOOOOUUUUCN';
 
