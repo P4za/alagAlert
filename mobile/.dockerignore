@@ -1,0 +1,14 @@
+build/
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+.idea/
+android/
+ios/
+linux/
+macos/
+windows/
+**/*.iml
+**/*.zip

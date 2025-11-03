@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
@@ -12,11 +12,42 @@ class ApiService {
   );
 
   static Uri _u(String path, [Map<String, String>? query]) {
-    final uri = Uri.parse(baseUrl);
-    // Garante que não vai duplicar barras
-    final cleanBase = uri.origin + (uri.path.endsWith('/') ? uri.path.substring(0, uri.path.length - 1) : uri.path);
-    final cleanPath = path.startsWith('/') ? path : '/$path';
-    return Uri.parse(cleanBase + cleanPath).replace(queryParameters: query);
+    final base = _resolveBaseUri();
+    final normalizedPath = path.startsWith('/') ? path : '/$path';
+    final basePath = _sanitizeBasePath(base.path);
+    final fullPath = basePath.isEmpty ? normalizedPath : '$basePath$normalizedPath';
+    final target = base.replace(path: fullPath, queryParameters: null);
+    return query == null ? target : target.replace(queryParameters: query);
+  }
+
+  static Uri _resolveBaseUri() {
+    final raw = baseUrl.trim();
+    if (raw.isEmpty) {
+      return kIsWeb ? Uri.base : Uri.parse('http://191.252.193.10:8000');
+    }
+
+    if (raw.contains('://')) {
+      return Uri.parse(raw);
+    }
+
+    if (!kIsWeb) {
+      if (raw.startsWith('/')) {
+        throw StateError(
+          'API_URL deve ser uma URL absoluta fora do ambiente web. Valor atual: $raw',
+        );
+      }
+      return Uri.parse('http://$raw');
+    }
+
+    final relative = raw.startsWith('/') ? raw : '/$raw';
+    return Uri.base.resolve(relative);
+  }
+
+  static String _sanitizeBasePath(String path) {
+    if (path.isEmpty || path == '/') {
+      return '';
+    }
+    return path.endsWith('/') ? path.substring(0, path.length - 1) : path;
   }
 
   static Future<RiskResult> getRiskByCity(String uf, String city) async {
@@ -54,7 +85,7 @@ class ApiService {
     final r = await http.get(url).timeout(const Duration(seconds: 25));
     if (r.statusCode != 200) {
       debugPrint('ERRO ${r.statusCode}: ${r.body}');
-      throw Exception('Erro ao obter regiões');
+      throw Exception('Erro ao obter regioes');
     }
     return jsonDecode(r.body) as Map<String, dynamic>;
   }

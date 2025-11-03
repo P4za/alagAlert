@@ -1,12 +1,40 @@
-# Flutter
+# General OS/files
+.DS_Store
+Thumbs.db
+
+# Python environments & secrets
+.venv/
+.venv-*/
+/backend/.venv/
+/backend/.venv-*/
+/backend/.env
+/backend/.env.*
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Flutter / Dart
 /mobile/build/
 /mobile/.dart_tool/
 /mobile/.idea/
-/mobile/.flutter-plugins*
+/mobile/.vscode/
+/mobile/.flutter-plugins
+/mobile/.flutter-plugins-dependencies
+/mobile/.metadata
 /mobile/.packages
+/mobile/android/
+/mobile/ios/
+/mobile/linux/
+/mobile/macos/
+/mobile/windows/
+/mobile/ios/Flutter/.symlinks/
+/mobile/ios/Pods/
+/mobile/android/app/debug/
+/mobile/android/app/profile/
+/mobile/android/app/release/
 
-# Python
-/backend/.venv/
-/backend/.env
-__pycache__/
-*.pyc
+# Generated coverage reports
+coverage/

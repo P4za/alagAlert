@@ -1,0 +1,25 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - ./backend/.env
+    environment:
+      - BRASIL_ABERTO_API_KEY=${BRASIL_ABERTO_API_KEY:-EWjY1WEqopkY86fusTfLgVdVsIaqvDzOoIfDQRqeJSSaDHnh6bWaISxlwckE7D9i}
+      - RATE_LIMIT=${RATE_LIMIT:-60/minute}
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./mobile
+      dockerfile: Dockerfile.web
+      args:
+        API_URL: ${FRONTEND_API_URL:-/api}
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

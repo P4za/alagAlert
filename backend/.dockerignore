@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.swp
+.*.swp
+.env
+.venv/
+.venv-*/
+.git/
+.gitignore
+.tests_cache/
+tests/
+tools/
