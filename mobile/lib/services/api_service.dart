@@ -13,7 +13,7 @@ class ApiService {
   static final String baseUrl = const String.fromEnvironment(
     'API_URL',
     // ALTERE aqui se quiser outro default
-    defaultValue: 'http://191.252.193.10:8000',
+    defaultValue: 'http://localhost:8000',
   );
 
   static Uri _u(String path, [Map<String, String>? query]) {
