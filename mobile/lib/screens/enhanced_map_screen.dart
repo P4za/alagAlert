@@ -413,6 +413,37 @@ class _EnhancedMapScreenState extends State<EnhancedMapScreen> {
 
   /// Legenda do mapa
   Widget _buildLegend() {
+    // Calcula status geral baseado nas áreas visíveis
+    final hasHighRisk = _riskPolygons.any((p) {
+      // Verifica pela cor vermelha
+      return p.borderColor == Colors.red;
+    });
+    final hasMediumRisk = _riskPolygons.any((p) {
+      return p.borderColor == Colors.orange;
+    });
+
+    String statusText;
+    Color statusColor;
+    IconData statusIcon;
+
+    if (hasHighRisk) {
+      statusText = 'CRÍTICA';
+      statusColor = Colors.red;
+      statusIcon = Icons.warning;
+    } else if (hasMediumRisk) {
+      statusText = 'ATENÇÃO';
+      statusColor = Colors.orange;
+      statusIcon = Icons.error_outline;
+    } else if (_riskPolygons.isNotEmpty) {
+      statusText = 'BOA';
+      statusColor = Colors.green;
+      statusIcon = Icons.check_circle;
+    } else {
+      statusText = 'SEM DADOS';
+      statusColor = Colors.grey;
+      statusIcon = Icons.info_outline;
+    }
+
     return Align(
       alignment: Alignment.bottomLeft,
       child: Padding(
@@ -420,26 +451,81 @@ class _EnhancedMapScreenState extends State<EnhancedMapScreen> {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.9),
+            color: Colors.white.withValues(alpha: 0.95),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Colors.black12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Status geral
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: statusColor, width: 1.5),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(statusIcon, color: statusColor, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Condição: $statusText',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: statusColor,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Título
               const Text(
                 'Nível de Risco',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
               ),
               const SizedBox(height: 8),
-              _buildLegendItem('Alto', Colors.red),
-              _buildLegendItem('Médio', Colors.orange),
-              _buildLegendItem('Baixo', Colors.green),
-              const SizedBox(height: 4),
-              Text(
-                '${_riskPolygons.length} área(s)',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+
+              // Itens da legenda
+              _buildLegendItem('Alto - Risco crítico', Colors.red, Icons.dangerous),
+              _buildLegendItem('Médio - Atenção', Colors.orange, Icons.warning_amber),
+              _buildLegendItem('Baixo - Seguro', Colors.green, Icons.check_circle_outline),
+
+              const SizedBox(height: 8),
+              const Divider(height: 1),
+              const SizedBox(height: 8),
+
+              // Contador de áreas
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.map, size: 16, color: Colors.grey.shade600),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${_riskPolygons.length} área(s) de risco',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade700,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -449,7 +535,7 @@ class _EnhancedMapScreenState extends State<EnhancedMapScreen> {
   }
 
   /// Item da legenda
-  Widget _buildLegendItem(String label, Color color) {
+  Widget _buildLegendItem(String label, Color color, IconData icon) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -465,7 +551,12 @@ class _EnhancedMapScreenState extends State<EnhancedMapScreen> {
             ),
           ),
           const SizedBox(width: 8),
-          Text(label),
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12),
+          ),
         ],
       ),
     );
