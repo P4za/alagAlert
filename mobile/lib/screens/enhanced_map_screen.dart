@@ -179,11 +179,6 @@ class _EnhancedMapScreenState extends State<EnhancedMapScreen> {
     }
   }
 
-  /// Formata data para API
-  String _formatDate(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-  }
-
   /// Muda filtro de nível de risco
   void _changeRiskFilter(String? level) {
     String? apiLevel;
