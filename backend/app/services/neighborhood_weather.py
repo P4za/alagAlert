@@ -1,13 +1,21 @@
 """
 Serviço para buscar bairros de uma cidade e calcular risco baseado em previsão de chuva REAL
+
+Integração:
+- Brasil Aberto API para buscar bairros automaticamente
+- Open-Meteo API para previsão de chuva
+- Fallback para bairros hardcoded se API não disponível
 """
 
 from typing import List, Dict, Optional
 from datetime import datetime
 import httpx
+from .brasil_aberto import BrasilAbertoService
 
-# Para demo, vamos usar alguns bairros conhecidos de São Paulo
-# Em produção, você integraria com uma API de bairros real
+# Cache de bairros por cidade (evita múltiplas chamadas à API)
+_NEIGHBORHOODS_CACHE: Dict[str, List[Dict]] = {}
+
+# Bairros hardcoded como fallback se a API Brasil Aberto não estiver disponível
 KNOWN_NEIGHBORHOODS = {
     "São Paulo": [
         {"name": "Tatuapé", "lat": -23.5320, "lon": -46.5650},
@@ -120,6 +128,13 @@ async def get_neighborhoods_with_weather(
     """
     Retorna GeoJSON com bairros e suas previsões de chuva
 
+    Estratégia:
+    1. Verifica cache de bairros
+    2. Se não encontrado, busca na API Brasil Aberto
+    3. Se API não disponível, usa bairros hardcoded
+    4. Para cada bairro, busca previsão do Open-Meteo
+    5. Calcula risco baseado em precipitação
+
     Args:
         city: Nome da cidade
         uf: Sigla do estado
@@ -129,8 +144,27 @@ async def get_neighborhoods_with_weather(
     Returns:
         GeoJSON FeatureCollection com polígonos de bairros
     """
-    # Busca bairros conhecidos da cidade
-    neighborhoods = KNOWN_NEIGHBORHOODS.get(city, [])
+    # 1. Verifica cache
+    cache_key = f"{city}|{uf}".lower()
+    if cache_key in _NEIGHBORHOODS_CACHE:
+        print(f"✅ Usando bairros do cache para {city}/{uf}")
+        neighborhoods = _NEIGHBORHOODS_CACHE[cache_key]
+    else:
+        # 2. Tenta buscar da API Brasil Aberto
+        print(f"🔍 Buscando bairros de {city}/{uf} na API Brasil Aberto...")
+        brasil_aberto = BrasilAbertoService()
+        neighborhoods = await brasil_aberto.get_districts_with_coordinates(city, uf)
+
+        # 3. Fallback para bairros hardcoded
+        if not neighborhoods:
+            print(f"⚠️  API Brasil Aberto não retornou bairros. Usando hardcoded.")
+            neighborhoods = KNOWN_NEIGHBORHOODS.get(city, [])
+        else:
+            print(f"✅ Encontrados {len(neighborhoods)} bairros via Brasil Aberto API")
+
+        # Armazena no cache
+        if neighborhoods:
+            _NEIGHBORHOODS_CACHE[cache_key] = neighborhoods
 
     if not neighborhoods:
         return {
