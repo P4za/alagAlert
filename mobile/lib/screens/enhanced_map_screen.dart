@@ -10,12 +10,14 @@ class EnhancedMapScreen extends StatefulWidget {
   final double? lat;
   final double? lon;
   final String? uf;
+  final String? cityName;
 
   const EnhancedMapScreen({
     super.key,
     this.lat,
     this.lon,
     this.uf,
+    this.cityName,
   });
 
   @override
@@ -56,7 +58,7 @@ class _EnhancedMapScreenState extends State<EnhancedMapScreen> {
     });
   }
 
-  /// Carrega áreas de risco do backend
+  /// Carrega áreas de risco do backend (BAIRROS com previsão real)
   Future<void> _loadRiskAreas() async {
     setState(() {
       _loading = true;
@@ -64,26 +66,35 @@ class _EnhancedMapScreenState extends State<EnhancedMapScreen> {
     });
 
     try {
+      // Calcula quantos dias desde hoje
+      final daysFromNow = _selectedDate.difference(DateTime.now()).inDays;
+      final forecastDays = (daysFromNow + 1).clamp(1, 7);
+
       final queryParams = {
-        'lat': _center.latitude.toString(),
-        'lon': _center.longitude.toString(),
-        'radius': '20', // 20 km de raio
-        'zoom': _zoom.round().toString(),
+        'city': widget.cityName ?? 'São Paulo',
+        'uf': widget.uf ?? 'SP',
+        'forecast_days': forecastDays.toString(),
         if (_selectedRiskLevel != null) 'risk_level': _selectedRiskLevel!,
-        'date': _formatDate(_selectedDate),
       };
 
-      final uri = Uri.parse('${ApiService.baseUrl}/risk/areas')
+      // USA O ENDPOINT CORRETO: /risk/neighborhoods
+      final uri = Uri.parse('${ApiService.baseUrl}/risk/neighborhoods')
           .replace(queryParameters: queryParams);
 
-      final response = await http.get(uri).timeout(const Duration(seconds: 10));
+      final response = await http.get(uri).timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
-        throw Exception('Erro ${response.statusCode} ao carregar áreas de risco');
+        throw Exception('Erro ${response.statusCode} ao carregar bairros');
       }
 
       final geojson = jsonDecode(response.body) as Map<String, dynamic>;
       final features = (geojson['features'] as List?) ?? [];
+
+      // Verifica se há mensagem de erro
+      final metadata = geojson['metadata'] as Map?;
+      if (metadata != null && metadata['message'] != null) {
+        throw Exception(metadata['message']);
+      }
 
       final polygons = <Polygon>[];
 
@@ -115,7 +126,7 @@ class _EnhancedMapScreenState extends State<EnhancedMapScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Erro ao carregar áreas: $e';
+          _error = 'Erro ao carregar bairros: $e';
           _loading = false;
         });
       }
