@@ -5,15 +5,10 @@ import 'package:http/http.dart' as http;
 import '../models/risk.dart';
 import '../models/location.dart';
 
-/// Centralize o endpoint da API:
-/// - Em produção, use --dart-define=API_URL=https://seu-dominio.com
-/// - Se nada for passado, usa o IP público e porta como default
 class ApiService {
-  // Um único ponto de origem para Web e Mobile
   static final String baseUrl = const String.fromEnvironment(
     'API_URL',
-    // ALTERE aqui se quiser outro default
-    defaultValue: 'http://localhost:8000',
+    defaultValue: 'http://191.252.193.10:8000',
   );
 
   static Uri _u(String path, [Map<String, String>? query]) {
