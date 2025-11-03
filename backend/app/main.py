@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Optional, Dict
 from pathlib import Path
 
 from fastapi import FastAPI, Request, Query, HTTPException
@@ -19,6 +19,7 @@ from .services.regions import load_regions_geojson
 from .services.geocode import (
     nominatim_lookup,
     nominatim_lookup_states,
+    nominatim_lookup_structured_city_uf,
 )
 from .services.weather_client import fetch_hourly_forecast
 from .utils.risk_engine import compute_risk
@@ -35,6 +36,9 @@ limiter = Limiter(key_func=get_remote_address, default_limits=[])
 app = FastAPI(title="AlagAlert API", version="0.7.0")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Cache simples para coordenadas por cidade/UF (evita repetir geocodificações no Nominatim)
+CITY_COORD_CACHE: Dict[str, Dict[str, float]] = {}
 
 # CORS
 app.add_middleware(
@@ -159,24 +163,67 @@ async def risk_by_city(
     date: Optional[str] = Query(None, description="Filtrar por data (YYYY-MM-DD)"),
 ):
     uf = uf.upper()
+    city_clean = city.strip()
+    cache_key = f"{city_clean.lower()}|{uf.lower()}"
 
-    nomi = await nominatim_lookup(
-        query=f"{city} {uf}, Brasil",
-        country="br",
-        limit=3,
-        cities_only=True,
-        prefer_uf=uf,
-    )
+    lat: Optional[float] = None
+    lon: Optional[float] = None
 
-    if not nomi:
-        from .services.geocode import nominatim_lookup_structured_city_uf
-        nomi = await nominatim_lookup_structured_city_uf(city=city, uf=uf, limit=5)
+    cached = CITY_COORD_CACHE.get(cache_key)
+    if cached:
+        lat = cached.get("lat")
+        lon = cached.get("lon")
 
-    if not nomi:
-        raise HTTPException(404, detail="Cidade não encontrada no Nominatim")
+    if lat is None or lon is None:
+        try:
+            nomi = await nominatim_lookup(
+                query=f"{city_clean} {uf}, Brasil",
+                country="br",
+                limit=3,
+                cities_only=True,
+                prefer_uf=uf,
+            )
+        except Exception as exc:  # noqa: BLE001
+            print(f"[risk/by-city] Erro ao consultar Nominatim livre: {exc}")
+            nomi = []
 
-    lat = float(nomi[0]["lat"])
-    lon = float(nomi[0]["lon"])
+        if not nomi:
+            try:
+                nomi = await nominatim_lookup_structured_city_uf(
+                    city=city_clean,
+                    uf=uf,
+                    limit=5,
+                )
+            except Exception as exc:  # noqa: BLE001
+                print(f"[risk/by-city] Erro ao consultar Nominatim estruturado: {exc}")
+                nomi = []
+
+        if nomi:
+            lat = float(nomi[0]["lat"])
+            lon = float(nomi[0]["lon"])
+            CITY_COORD_CACHE[cache_key] = {"lat": lat, "lon": lon}
+
+    if lat is None or lon is None:
+        from .services.neighborhood_weather import KNOWN_NEIGHBORHOODS
+
+        neighborhoods = (
+            KNOWN_NEIGHBORHOODS.get(city_clean)
+            or KNOWN_NEIGHBORHOODS.get(city_clean.title())
+        )
+
+        if neighborhoods:
+            valid_points = [
+                (n.get("lat"), n.get("lon"))
+                for n in neighborhoods
+                if isinstance(n.get("lat"), (int, float)) and isinstance(n.get("lon"), (int, float))
+            ]
+            if valid_points:
+                lat = sum(lat_ for lat_, _ in valid_points) / len(valid_points)
+                lon = sum(lon_ for _, lon_ in valid_points) / len(valid_points)
+                CITY_COORD_CACHE[cache_key] = {"lat": lat, "lon": lon}
+
+    if lat is None or lon is None:
+        raise HTTPException(503, detail="Geocodificação indisponível no momento. Tente novamente em instantes.")
 
     hourly = await fetch_hourly_forecast(lat=lat, lon=lon, forecast_days=forecast_days)
 

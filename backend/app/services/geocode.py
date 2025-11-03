@@ -2,9 +2,12 @@
 from typing import Optional, List, Dict
 import httpx
 import unicodedata
+import logging
 
 NOMINATIM_BASE = "https://nominatim.openstreetmap.org/search"
 HEADERS = {"User-Agent": "AlagAlert/1.0 (contact: suporte@alagalert.local)"}
+
+logger = logging.getLogger(__name__)
 
 # Mapa UF -> nome do estado (para busca estruturada)
 UF_TO_STATE = {
@@ -51,10 +54,20 @@ def _row_to_item(d: Dict) -> Dict:
     }
 
 async def _nominatim_get(params: Dict) -> List[Dict]:
-    async with httpx.AsyncClient(headers=HEADERS, timeout=15) as client:
-        r = await client.get(NOMINATIM_BASE, params=params)
-        r.raise_for_status()
-        return r.json()
+    try:
+        async with httpx.AsyncClient(headers=HEADERS, timeout=15) as client:
+            r = await client.get(NOMINATIM_BASE, params=params)
+            r.raise_for_status()
+            return r.json()
+    except httpx.TimeoutException:
+        logger.warning("Nominatim timeout for params=%s", params)
+        return []
+    except httpx.HTTPError as exc:
+        logger.warning("Nominatim HTTP error: %s", exc)
+        return []
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("Unexpected Nominatim error: %s", exc)
+        return []
 
 async def nominatim_lookup(
     query: str,
@@ -72,6 +85,8 @@ async def nominatim_lookup(
         "limit": limit,
     }
     data = await _nominatim_get(params)
+    if not data:
+        return []
     items = [_row_to_item(d) for d in data]
 
     if cities_only:
@@ -80,6 +95,8 @@ async def nominatim_lookup(
     if not items:
         # fallback: mesma query sem filtro “cities_only” (filtra manual depois)
         data2 = await _nominatim_get(params)
+        if not data2:
+            return []
         items = [_row_to_item(d) for d in data2]
         items = [it for it in items if any(k in it["address"] for k in ["city", "town", "village"])]
 
@@ -116,6 +133,8 @@ async def nominatim_lookup_structured_city_uf(
         "limit": limit,
     }
     data = await _nominatim_get(params)
+    if not data:
+        return []
     items = [_row_to_item(d) for d in data]
     # ainda reforça a UF quando vier com "BR-SP"
     items = [it for it in items if it["uf"] in (uf, "")]

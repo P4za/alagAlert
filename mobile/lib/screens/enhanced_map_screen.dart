@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -34,6 +35,9 @@ class _EnhancedMapScreenState extends State<EnhancedMapScreen> {
   List<Polygon> _riskPolygons = [];
   bool _loading = false;
   String? _error;
+  String _loadingStatus = 'Carregando bairros...';
+  Timer? _loadingMessageTimer;
+  int _loadingMessageStep = 0;
 
   // Filtros
   String? _selectedRiskLevel; // low, medium, high
@@ -43,27 +47,78 @@ class _EnhancedMapScreenState extends State<EnhancedMapScreen> {
   @override
   void initState() {
     super.initState();
-
-    // Define centro inicial
     if (widget.lat != null && widget.lon != null) {
       _center = LatLng(widget.lat!, widget.lon!);
     } else {
-      // Padrão: São Paulo/SP
       _center = const LatLng(-23.5505, -46.6333);
     }
-
-    // Carrega áreas de risco após o frame inicial
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadRiskAreas();
+      _bootstrap();
     });
+  }
+
+  Future<void> _bootstrap() async {
+    await _ensureCityCenter();
+    await _loadRiskAreas();
+  }
+
+  Future<void> _ensureCityCenter() async {
+    if (widget.lat != null && widget.lon != null) {
+      return;
+    }
+
+    final city = widget.cityName;
+    final uf = widget.uf;
+    if (city == null || city.isEmpty || uf == null || uf.isEmpty) {
+      return;
+    }
+
+    try {
+      if (mounted) {
+        setState(() {
+          _loadingStatus = 'Localizando $city/$uf...';
+        });
+      }
+
+      final uri = Uri.parse('${ApiService.baseUrl}/risk/by-city')
+          .replace(queryParameters: {'city': city, 'uf': uf});
+      final response = await http.get(uri);
+
+      if (response.statusCode != 200) {
+        return;
+      }
+
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final location = decoded['location'];
+      if (location is Map) {
+        final lat = (location['lat'] as num?)?.toDouble();
+        final lon = (location['lon'] as num?)?.toDouble();
+        if (lat != null && lon != null) {
+          final center = LatLng(lat, lon);
+          if (mounted) {
+            setState(() {
+              _center = center;
+            });
+          }
+          _mapController.move(center, _zoom);
+        }
+      }
+    } catch (_) {
+      // Mantem centro atual se a localização falhar
+    }
   }
 
   /// Carrega áreas de risco do backend (BAIRROS com previsão real)
   Future<void> _loadRiskAreas() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _error = null;
+        _loadingStatus = 'Consultando API Brasil Aberto...';
+        _riskPolygons = [];
+      });
+    }
+    _startLoadingMessageSequence();
 
     try {
       // Calcula quantos dias desde hoje
@@ -81,10 +136,17 @@ class _EnhancedMapScreenState extends State<EnhancedMapScreen> {
       final uri = Uri.parse('${ApiService.baseUrl}/risk/neighborhoods')
           .replace(queryParameters: queryParams);
 
-      final response = await http.get(uri).timeout(const Duration(seconds: 15));
+      final response = await http.get(uri);
+      _cancelLoadingMessageSequence();
 
       if (response.statusCode != 200) {
         throw Exception('Erro ${response.statusCode} ao carregar bairros');
+      }
+
+      if (mounted) {
+        setState(() {
+          _loadingStatus = 'Processando resposta da API...';
+        });
       }
 
       final geojson = jsonDecode(response.body) as Map<String, dynamic>;
@@ -117,16 +179,80 @@ class _EnhancedMapScreenState extends State<EnhancedMapScreen> {
         }
       }
 
+      if (features.isEmpty) {
+        if (mounted) {
+          setState(() {
+            _loadingStatus = 'Nenhum bairro retornado pela Brasil Aberto.';
+          });
+        }
+        return;
+      }
+
+      final processed = <Polygon>[];
+      final total = features.length;
+
+      for (var i = 0; i < total; i++) {
+        final feature = features[i];
+        if (feature is! Map) {
+          continue;
+        }
+
+        final geometry = feature['geometry'] as Map?;
+        final properties = feature['properties'] as Map?;
+
+        if (geometry == null || properties == null) {
+          continue;
+        }
+
+        final type = geometry['type'] as String?;
+        final coords = geometry['coordinates'];
+
+        if (type == 'Polygon' && coords is List) {
+          final polygon = _parsePolygon(coords, properties);
+          if (polygon != null) {
+            processed.add(polygon);
+            if (mounted) {
+              final bairro = properties['name']?.toString() ?? 'bairro ${i + 1}';
+              setState(() {
+                _riskPolygons = List<Polygon>.from(processed);
+                _loadingStatus = 'Analisando $bairro (${i + 1}/$total)...';
+              });
+            }
+            await Future<void>.delayed(const Duration(milliseconds: 120));
+          }
+        }
+      }
+
       if (mounted) {
         setState(() {
-          _riskPolygons = polygons;
-          _loading = false;
+          _riskPolygons = List<Polygon>.from(processed);
+        });
+      }
+
+      _fitMapToPolygons(processed);
+
+      if (mounted) {
+        setState(() {
+          _loadingStatus = 'Mapeamento concluido.';
         });
       }
     } catch (e) {
+      _cancelLoadingMessageSequence();
       if (mounted) {
         setState(() {
-          _error = 'Erro ao carregar bairros: $e';
+          if (e is TimeoutException) {
+            _error = 'Tempo limite excedido ao buscar bairros. Tente novamente em instantes.';
+            _loadingStatus = 'Tempo limite excedido.';
+          } else {
+            _error = 'Erro ao carregar bairros: $e';
+            _loadingStatus = 'Falha ao carregar bairros.';
+          }
+        });
+      }
+    } finally {
+      _cancelLoadingMessageSequence();
+      if (mounted) {
+        setState(() {
           _loading = false;
         });
       }
@@ -392,10 +518,10 @@ class _EnhancedMapScreenState extends State<EnhancedMapScreen> {
                   color: Colors.black.withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox(
+                    const SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
@@ -403,10 +529,13 @@ class _EnhancedMapScreenState extends State<EnhancedMapScreen> {
                         valueColor: AlwaysStoppedAnimation(Colors.white),
                       ),
                     ),
-                    SizedBox(width: 12),
-                    Text(
-                      'Carregando áreas...',
-                      style: TextStyle(color: Colors.white),
+                    const SizedBox(width: 12),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 220),
+                      child: Text(
+                        _loadingStatus,
+                        style: const TextStyle(color: Colors.white),
+                      ),
                     ),
                   ],
                 ),
@@ -415,6 +544,105 @@ class _EnhancedMapScreenState extends State<EnhancedMapScreen> {
           ),
       ],
     );
+  }
+
+  void _fitMapToPolygons(List<Polygon> polygons) {
+    if (polygons.isEmpty) {
+      return;
+    }
+
+    double minLat = polygons.first.points.first.latitude;
+    double maxLat = minLat;
+    double minLon = polygons.first.points.first.longitude;
+    double maxLon = minLon;
+
+    for (final polygon in polygons) {
+      for (final point in polygon.points) {
+        if (point.latitude < minLat) {
+          minLat = point.latitude;
+        }
+        if (point.latitude > maxLat) {
+          maxLat = point.latitude;
+        }
+        if (point.longitude < minLon) {
+          minLon = point.longitude;
+        }
+        if (point.longitude > maxLon) {
+          maxLon = point.longitude;
+        }
+      }
+    }
+
+    final center = LatLng(
+      (minLat + maxLat) / 2,
+      (minLon + maxLon) / 2,
+    );
+
+    final latSpan = (maxLat - minLat).abs();
+    final lonSpan = (maxLon - minLon).abs();
+    final span = latSpan > lonSpan ? latSpan : lonSpan;
+
+    double targetZoom;
+    if (span < 0.02) {
+      targetZoom = 14.0;
+    } else if (span < 0.05) {
+      targetZoom = 13.5;
+    } else if (span < 0.1) {
+      targetZoom = 13.0;
+    } else if (span < 0.2) {
+      targetZoom = 12.0;
+    } else if (span < 0.4) {
+      targetZoom = 11.0;
+    } else {
+      targetZoom = 10.0;
+    }
+
+    if (mounted) {
+      setState(() {
+        _center = center;
+        _zoom = targetZoom;
+      });
+    }
+    _mapController.move(center, targetZoom);
+  }
+
+  void _startLoadingMessageSequence() {
+    _cancelLoadingMessageSequence();
+    _loadingMessageStep = 0;
+    const messages = [
+      'Carregando bairros (Brasil Aberto pode levar alguns segundos)...',
+      'Geocodificando bairros, analisando um a um...',
+      'Consolidando dados dos bairros...',
+    ];
+
+    _loadingMessageTimer = Timer.periodic(const Duration(seconds: 6), (timer) {
+      if (!mounted || !_loading) {
+        timer.cancel();
+        return;
+      }
+
+      setState(() {
+        if (_loadingStatus == 'Consultando API Brasil Aberto...') {
+          _loadingStatus = 'Consultando API Brasil Aberto (buscando bairros)...';
+        } else {
+          final index = _loadingMessageStep % messages.length;
+          _loadingStatus = messages[index];
+        }
+      });
+
+      _loadingMessageStep++;
+    });
+  }
+
+  void _cancelLoadingMessageSequence() {
+    _loadingMessageTimer?.cancel();
+    _loadingMessageTimer = null;
+  }
+
+  @override
+  void dispose() {
+    _cancelLoadingMessageSequence();
+    super.dispose();
   }
 
   /// Legenda do mapa
