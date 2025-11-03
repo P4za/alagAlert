@@ -63,7 +63,7 @@ class _CityPickerScreenState extends State<CityPickerScreen> {
 
           // --- Dropdown para Estado (Lista Estática) ---
           DropdownButtonFormField<String>(
-            value: _selectedUf,
+            initialValue: _selectedUf,
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
               hintText: 'Selecione o Estado',
@@ -253,7 +253,7 @@ class _CitySearchFieldState extends State<_CitySearchField> {
               borderRadius: BorderRadius.circular(8),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),

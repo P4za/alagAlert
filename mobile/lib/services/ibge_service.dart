@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 /// Serviço para buscar dados diretamente da API do IBGE
@@ -42,7 +43,7 @@ class IbgeService {
 
       return cities;
     } catch (e) {
-      print('Erro ao buscar cidades do IBGE: $e');
+      debugPrint('Erro ao buscar cidades do IBGE: $e');
       return [];
     }
   }
