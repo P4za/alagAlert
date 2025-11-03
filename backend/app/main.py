@@ -318,6 +318,46 @@ async def risk_areas(
         raise HTTPException(500, detail=f"Erro ao carregar áreas de risco: {e}")
 
 # ---------------------------------------------------------------------
+# Bairros com previsão de chuva REAL
+# ---------------------------------------------------------------------
+@app.get("/risk/neighborhoods")
+@limiter.limit(RATE_LIMIT)
+async def risk_neighborhoods(
+    request: Request,
+    city: str = Query(..., min_length=1, description="Nome da cidade"),
+    uf: str = Query(..., min_length=2, max_length=2, description="Sigla do estado"),
+    forecast_days: int = Query(1, ge=1, le=7, description="Dias de previsão (1-7)"),
+    risk_level: Optional[str] = Query(
+        None,
+        pattern="^(low|medium|high)$",
+        description="Filtro por nível de risco",
+    ),
+):
+    """
+    Retorna GeoJSON com bairros e previsão de chuva REAL do Open-Meteo.
+
+    A cor dos polígonos é baseada na quantidade de chuva prevista:
+    - Verde (baixo): < 10mm de chuva
+    - Laranja (médio): 10-20mm de chuva
+    - Vermelho (alto): > 20mm de chuva
+
+    Exemplo: GET /risk/neighborhoods?city=São Paulo&uf=SP&forecast_days=1
+    """
+    try:
+        from .services.neighborhood_weather import get_neighborhoods_with_weather
+
+        gj = await get_neighborhoods_with_weather(
+            city=city,
+            uf=uf.upper(),
+            forecast_days=forecast_days,
+            risk_level=risk_level,
+        )
+
+        return JSONResponse(gj)
+    except Exception as e:
+        raise HTTPException(500, detail=f"Erro ao carregar bairros: {e}")
+
+# ---------------------------------------------------------------------
 # Servir Flutter Web na raiz
 # ---------------------------------------------------------------------
 WEB_DIR = os.getenv(

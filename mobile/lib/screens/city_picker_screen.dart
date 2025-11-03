@@ -58,15 +58,16 @@ class _CityPickerScreenState extends State<CityPickerScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('Estado (Selecione a UF)'),
+          const Text('Estado (Selecione a UF)', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          
+
           // --- Dropdown para Estado (Lista Estática) ---
           DropdownButtonFormField<String>(
-            initialValue: _selectedUf,
+            value: _selectedUf,
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
               hintText: 'Selecione o Estado',
+              prefixIcon: Icon(Icons.map),
             ),
             items: _ufs.map((String uf) {
               return DropdownMenuItem<String>(
@@ -85,81 +86,43 @@ class _CityPickerScreenState extends State<CityPickerScreen> {
           ),
           // --- Fim Dropdown Estado ---
 
-          const SizedBox(height: 16),
-          const Text('Cidade (digite para buscar)'),
+          const SizedBox(height: 24),
+          const Text('Cidade', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          
-          // --- Autocomplete para Cidade (Busca pela API IBGE) ---
-          Autocomplete<Map<String, String>>(
-            optionsBuilder: (TextEditingValue textEditingValue) async {
-              if (_selectedUf == null || _selectedUf!.isEmpty) {
-                return const Iterable<Map<String, String>>.empty();
-              }
-              // Busca direto na API do IBGE (não depende do backend)
-              final cities = await IbgeService.searchCities(
-                uf: _selectedUf!,
-                query: textEditingValue.text,
-              );
-              return cities.take(20); // Limita a 20 resultados
-            },
-            displayStringForOption: (Map<String, String> option) => option['nome'] ?? '',
 
-            fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
-              textEditingController.text = _cityCtl.text;
-              return TextField(
-                controller: textEditingController,
-                focusNode: focusNode,
-                enabled: _selectedUf != null && _selectedUf!.isNotEmpty,
-                decoration: InputDecoration(
-                  hintText: _selectedUf == null
-                      ? 'Escolha primeiro o Estado'
-                      : 'Ex.: Campinas',
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.location_city),
-                ),
-                onChanged: (text) {
-                  _cityCtl.text = text;
-                  setState(() {});
-                },
-              );
-            },
-            
-            optionsViewBuilder: (context, onSelected, options) {
-              return Align(
-                alignment: Alignment.topLeft,
-                child: Material(
-                  elevation: 4.0,
-                  child: SizedBox(
-                    height: 250.0,
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(8.0),
-                      itemCount: options.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        final Map<String, String> item = options.elementAt(index);
-                        return GestureDetector(
-                          onTap: () {
-                            onSelected(item);
-                          },
-                          child: ListTile(
-                            leading: const Icon(Icons.location_on_outlined),
-                            title: Text(item['nome'] ?? ''),
-                            subtitle: Text('${item['nome']} - $_selectedUf'),
-                          ),
-                        );
-                      },
+          // --- Campo de busca de cidade ---
+          if (_selectedUf == null || _selectedUf!.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.grey.shade600),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Selecione primeiro um estado',
+                      style: TextStyle(color: Colors.grey.shade700),
                     ),
                   ),
-                ),
-              );
-            },
-
-            onSelected: (Map<String, String> item) {
-              _selectedCity = item['nome'];
-              _cityCtl.text = _selectedCity ?? '';
-              setState(() {});
-            },
-          ),
-          // --- Fim Autocomplete Cidade ---
+                ],
+              ),
+            )
+          else
+            _CitySearchField(
+              uf: _selectedUf!,
+              initialCity: _selectedCity,
+              onCitySelected: (cityName) {
+                setState(() {
+                  _selectedCity = cityName;
+                  _cityCtl.text = cityName;
+                });
+              },
+            ),
 
           const SizedBox(height: 24),
           FilledButton(
@@ -169,5 +132,183 @@ class _CityPickerScreenState extends State<CityPickerScreen> {
         ],
       ),
     );
+  }
+}
+
+/// Widget separado para busca de cidades
+class _CitySearchField extends StatefulWidget {
+  final String uf;
+  final String? initialCity;
+  final Function(String) onCitySelected;
+
+  const _CitySearchField({
+    required this.uf,
+    this.initialCity,
+    required this.onCitySelected,
+  });
+
+  @override
+  State<_CitySearchField> createState() => _CitySearchFieldState();
+}
+
+class _CitySearchFieldState extends State<_CitySearchField> {
+  final TextEditingController _controller = TextEditingController();
+  List<Map<String, String>> _allCities = [];
+  List<Map<String, String>> _filteredCities = [];
+  bool _loading = false;
+  bool _showSuggestions = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialCity != null) {
+      _controller.text = widget.initialCity!;
+    }
+    _loadCities();
+  }
+
+  Future<void> _loadCities() async {
+    setState(() => _loading = true);
+
+    final cities = await IbgeService.getCitiesByUf(widget.uf);
+
+    if (mounted) {
+      setState(() {
+        _allCities = cities;
+        _loading = false;
+        _filterCities(_controller.text);
+      });
+    }
+  }
+
+  void _filterCities(String query) {
+    if (query.trim().isEmpty) {
+      setState(() {
+        _filteredCities = _allCities.take(20).toList();
+      });
+      return;
+    }
+
+    final queryLower = IbgeService.removeDiacriticsPublic(query.toLowerCase());
+    final filtered = _allCities.where((city) {
+      final cityName = IbgeService.removeDiacriticsPublic(city['nome']!.toLowerCase());
+      return cityName.contains(queryLower);
+    }).take(20).toList();
+
+    setState(() {
+      _filteredCities = filtered;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: _controller,
+          decoration: InputDecoration(
+            hintText: 'Digite o nome da cidade',
+            border: const OutlineInputBorder(),
+            prefixIcon: const Icon(Icons.location_city),
+            suffixIcon: _loading
+                ? const Padding(
+                    padding: EdgeInsets.all(12.0),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : _controller.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _controller.clear();
+                          _filterCities('');
+                          setState(() => _showSuggestions = false);
+                        },
+                      )
+                    : null,
+          ),
+          onChanged: (text) {
+            _filterCities(text);
+            setState(() => _showSuggestions = text.isNotEmpty);
+          },
+          onTap: () {
+            if (_controller.text.isNotEmpty) {
+              setState(() => _showSuggestions = true);
+            }
+          },
+        ),
+
+        // Lista de sugestões
+        if (_showSuggestions && _filteredCities.isNotEmpty)
+          Container(
+            margin: const EdgeInsets.only(top: 4),
+            constraints: const BoxConstraints(maxHeight: 300),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: _filteredCities.length,
+              itemBuilder: (context, index) {
+                final city = _filteredCities[index];
+                return ListTile(
+                  leading: const Icon(Icons.location_on_outlined, size: 20),
+                  title: Text(city['nome']!),
+                  subtitle: Text('${city['nome']} - ${widget.uf}'),
+                  dense: true,
+                  onTap: () {
+                    _controller.text = city['nome']!;
+                    widget.onCitySelected(city['nome']!);
+                    setState(() => _showSuggestions = false);
+                  },
+                );
+              },
+            ),
+          ),
+
+        // Mensagem se não encontrou
+        if (_showSuggestions && _filteredCities.isEmpty && !_loading)
+          Container(
+            margin: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.orange.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.orange.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.search_off, color: Colors.orange.shade700),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Nenhuma cidade encontrada com "${_controller.text}"',
+                    style: TextStyle(color: Colors.orange.shade900),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }
