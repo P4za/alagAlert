@@ -73,11 +73,11 @@ O sistema consiste em:
 ## 📋 Pré-requisitos
 
 ### Backend
-- Python 3.13+
+- Python 3.13.9
 - pip
 
 ### Mobile
-- Flutter 3.35.x (Dart 3.x)
+- Flutter 3.35.7 (Dart 3.9.2)
 - Android Studio / Xcode (para emuladores)
 
 ---
