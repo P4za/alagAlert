@@ -394,16 +394,6 @@ alagAlert/
 
 ---
 
-## 🤝 Contribuindo
-
-1. Fork o projeto
-2. Crie uma branch (`git checkout -b feature/nova-feature`)
-3. Commit suas mudanças (`git commit -m 'Adiciona nova feature'`)
-4. Push para a branch (`git push origin feature/nova-feature`)
-5. Abra um Pull Request
-
----
-
 ## 📄 Licença
 
 Este projeto é acadêmico e foi desenvolvido para fins educacionais.
@@ -412,10 +402,7 @@ Este projeto é acadêmico e foi desenvolvido para fins educacionais.
 
 ## 👥 Autores
 
-- **Equipe AlagAlert** - UNIP - Desenvolvimento de Sistemas Distribuídos
+- Pedro Augusto Lima Assis -- G5090G8
+- Marcos Vinicius da Silva Pereira -- G629DD8
+- Heitor Vieira de Medeiros -- T136229
 
----
-
-## 📞 Suporte
-
-Para dúvidas ou problemas, abra uma [issue](https://github.com/mpereira356/alagalert/issues) no GitHub.
