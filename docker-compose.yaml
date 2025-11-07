@@ -6,7 +6,7 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      - BRASIL_ABERTO_API_KEY=${BRASIL_ABERTO_API_KEY:-EWjY1WEqopkY86fusTfLgVdVsIaqvDzOoIfDQRqeJSSaDHnh6bWaISxlwckE7D9i}
+      - BRASIL_ABERTO_API_KEY=${BRASIL_ABERTO_API_KEY:-SUA_API_AQUI}
       - RATE_LIMIT=${RATE_LIMIT:-60/minute}
     ports:
       - "8000:8000"
