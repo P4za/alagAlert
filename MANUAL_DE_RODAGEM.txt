@@ -1,157 +1,213 @@
-==================================================
-MANUAL DE RODAGEM - AlagAlert
-==================================================
+============================================================
+                MANUAL DE RODAGEM - AlagAlert
+============================================================
 
-1. Objetivo e escopo
-O avaliador deve conseguir executar a API FastAPI (backend) e o aplicativo Flutter (frontend) localmente, com os mesmos dados utilizados pelo grupo. Este documento lista todos os passos obrigatorios, variaveis de ambiente e comandos esperados.
+##############################
+1. OBJETIVO E ESCOPO
+##############################
+O avaliador deve conseguir executar a API FastAPI (backend) e o aplicativo Flutter (frontend) localmente, 
+utilizando os mesmos dados do grupo. 
+Este documento descreve todos os passos obrigatórios, variáveis de ambiente e comandos necessários.
 
-2. Estrutura do repositorio
-- backend/  -> API FastAPI responsavel por geocodificacao, consulta de previsao e calculo de risco.
-- frontend/ -> App Flutter utilizado pelos avaliadores (Android/iOS/Web/Desktop).
-- docker-compose.yaml -> opcional para subir tudo em contenedores (ajustes descritos na Secao 8).
-Nao ha banco de dados dedicado; todo armazenamento e em memoria ou vindo de APIs externas (Open-Meteo, Nominatim, IBGE).
 
-3. Pre-requisitos
-3.1 Sistema operacional (qualquer um dos abaixo funciona):
-    - Windows 11 ou 10 22H2 com PowerShell 5.1+.
-    - macOS 13 Ventura+ com Homebrew.
-    - Ubuntu 22.04+ (ou distro equivalente com systemd).
-3.2 Ferramentas comuns:
-    - Acesso a internet liberado para https://api.open-meteo.com, https://nominatim.openstreetmap.org e https://servicodados.ibge.gov.br.
-3.3 Backend:
+##############################
+2. ESTRUTURA DO REPOSITÓRIO
+##############################
+backend/  -> API FastAPI responsável por geocodificação, previsão e cálculo de risco.
+frontend/ -> Aplicativo Flutter (Android/iOS/Web/Desktop).
+docker-compose.yaml -> (Opcional) Subida via contêineres Docker (detalhes na Seção 8).
+
+* Não há banco de dados dedicado; o armazenamento é em memória ou via APIs externas (Open-Meteo, Nominatim, IBGE).
+
+
+##############################
+3. PRÉ-REQUISITOS
+##############################
+3.1 SISTEMA OPERACIONAL:
+    - Windows 10/11 22H2+ com PowerShell 5.1+
+    - macOS 13 Ventura+
+    - Ubuntu 22.04+ ou equivalente
+
+3.2 FERRAMENTAS COMUNS:
+    - Acesso à internet liberado para:
+      https://api.open-meteo.com
+      https://nominatim.openstreetmap.org
+      https://servicodados.ibge.gov.br
+
+3.3 BACKEND:
     - Python 3.13.9
-    - pip 23+ (vem com o Python oficial).
-    - (Opcional) virtualenv para isolamento do ambiente.
-3.4 Frontend:
-    - Flutter SDK 3.35.7 (Dart 3.9.2).
-    - Android Studio Giraffe+ com Android SDK 34 e um emulador habilitado; ou Xcode 15+ para iOS; ou Chrome para execucao web.
-    - Drivers USB habilitados caso utilize um dispositivo fisico.
-3.5 Recursos opcionais:
-    - Docker 24+ e Docker Compose v2, caso opte por utilizar contenedores.
+    - pip 23+ (vem com o Python)
+    - (Opcional) virtualenv para isolamento do ambiente
 
-4. Passo a passo resumido (checklist)
-    1. cd alagAlert
-    2. Configurar a API (Secao 5) e garantir que http://localhost:8000/health responde {"ok": true}.
-    3. Configurar o app Flutter (Secao 6) apontando para a API.
-    4. Validar as telas listadas na Secao 7 (resultados e mapa).
+3.4 FRONTEND:
+    - Flutter SDK 3.35.7 (Dart 3.9.2)
+    - Android Studio Giraffe+ com SDK 34 e emulador ativo
+    - Xcode 15+ (iOS)
+    - Chrome (execução web)
+    - Drivers USB (para dispositivos físicos)
 
-5. Backend FastAPI
-5.1 Preparar ambiente virtual (recomendado)
+3.5 OPCIONAIS:
+    - Docker 24+ e Docker Compose v2
+
+
+##############################
+4. CHECKLIST DE EXECUÇÃO
+##############################
+1. cd alagAlert
+2. Configurar o backend (Seção 5) e validar http://localhost:8000/health -> {"ok": true}
+3. Configurar o app Flutter (Seção 6) apontando para a API
+4. Validar as telas e o mapa (Seção 7)
+
+
+##############################
+5. BACKEND (FASTAPI)
+##############################
+
+===== 5.1 CRIAR AMBIENTE VIRTUAL =====
 Linux/macOS:
-```
+--------------------------------------------
 cd backend
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-```
+--------------------------------------------
+
 Windows (PowerShell):
-```
+--------------------------------------------
 cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-```
+--------------------------------------------
 
-5.2 Variaveis de ambiente
-Copie o arquivo de exemplo e ajuste os valores:
-```
+
+===== 5.2 VARIÁVEIS DE AMBIENTE =====
+Copie o arquivo de exemplo:
+--------------------------------------------
 cp .env.example .env        # Linux/macOS
 copy .env.example .env      # Windows
-```
-| Variavel               | Obrigatorio | Descricao                                                                 |
-|------------------------|-------------|---------------------------------------------------------------------------|
-| BRASIL_ABERTO_API_KEY | Nao         | Chave para API Brasil Aberto; sem ela a rota /risk/neighborhoods usa mock |
-| HOST                  | Nao         | Interface escutada pelo uvicorn (padrao 0.0.0.0)                          |
-| PORT                  | Nao         | Porta do backend (padrao 8000)                                            |
-| RATE_LIMIT            | Nao         | Limite SlowAPI (padrao 60/minute)                                         |
-| WEB_DIR               | Nao         | Caminho opcional para build Flutter Web a ser servido pela API            |
+--------------------------------------------
 
-5.3 Instalar dependencias
-Com o ambiente ativo e dentro de backend/ execute:
-```
+| Variável              | Obrigatório | Descrição |
+|-----------------------|-------------|------------|
+| BRASIL_ABERTO_API_KEY | Não | Chave opcional da API Brasil Aberto |
+| HOST                  | Não | Interface do servidor (padrão 0.0.0.0) |
+| PORT                  | Não | Porta do backend (padrão 8000) |
+| RATE_LIMIT            | Não | Limite SlowAPI (padrão 60/minute) |
+| WEB_DIR               | Não | Caminho opcional do build Flutter Web |
+
+===== 5.3 INSTALAR DEPENDÊNCIAS =====
+--------------------------------------------
 pip install -r requirements.txt
-```
+--------------------------------------------
 
-5.4 Executar o servidor
-Modo desenvolvimento (recarga automatica):
-```
-uvicorn app.main:app --host ${HOST:-0.0.0.0} --port ${PORT:-8000} --reload
-```
-Ou utilizando o modulo python:
-```
+===== 5.4 EXECUTAR SERVIDOR =====
+Modo desenvolvimento:
+--------------------------------------------
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+--------------------------------------------
+ou
+--------------------------------------------
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
-A API fica disponivel em http://localhost:8000 e a documentacao Swagger/OpenAPI em http://localhost:8000/docs.
+--------------------------------------------
 
-5.5 Testes rapidos do backend
-Com o servidor em execucao:
-```
+API: http://localhost:8000  
+Swagger: http://localhost:8000/docs
+
+===== 5.5 TESTES RÁPIDOS =====
+--------------------------------------------
 curl http://localhost:8000/health
 curl "http://localhost:8000/risk/by-city?city=Santos&uf=SP"
-```
-Respostas 200 indicam que os acessos as APIs externas estao funcionando.
+--------------------------------------------
 
-6. Frontend Flutter
-6.1 Validar instalacao do Flutter
-```
+
+##############################
+6. FRONTEND (FLUTTER)
+##############################
+
+Antes de seguir, abra um novo terminal mas permaneça com o terminal do backend aberto.
+
+===== 6.1 VALIDAR INSTALAÇÃO =====
+--------------------------------------------
 flutter --version
 flutter doctor
-```
-Garanta que todos os checkboxes estao verdes (especialmente Android toolchain e Chrome se for usar Web).
+--------------------------------------------
 
-6.2 Configurar a origem da API
-O app consome a constante `ApiService.baseUrl`, que por padrao usa `http://localhost:8000`. Caso rode o backend em outro host (ex.: emulador Android acessando a maquina), ajuste com `--dart-define`:
-- Emulador Android: `flutter run --dart-define=API_URL=http://10.0.2.2:8000`
-- Dispositivo Android fisico na mesma rede: `flutter run --dart-define=API_URL=http://SEU_IP:8000`
-- iOS Simulator: `flutter run --dart-define=API_URL=http://127.0.0.1:8000`
-- Web: `flutter run -d chrome --dart-define=API_URL=http://localhost:8000`
+===== 6.2 CONFIGURAR API =====
+O app usa `ApiService.baseUrl` = http://localhost:8000  
+Use `--dart-define` para alterar o endpoint:
 
-Tambem e possivel alterar o valor padrao em `frontend/lib/services/api_service.dart`, mas o uso de `--dart-define` evita modificacoes de codigo.
+- Emulador Android: flutter run --dart-define=API_URL=http://10.0.2.2:8000
+- Dispositivo físico: flutter run --dart-define=API_URL=http://SEU_IP:8000
+- iOS Simulator: flutter run --dart-define=API_URL=http://127.0.0.1:8000
+- Web: flutter run -d chrome --dart-define=API_URL=http://localhost:8000
 
-6.3 Instalar dependencias Flutter
-```
+===== 6.3 INSTALAR DEPENDÊNCIAS =====
+--------------------------------------------
 cd frontend
 flutter pub get
-```
+--------------------------------------------
 
-6.4 Executar o aplicativo
-- Android (emulador): `flutter run -d emulator-5554`
-- Android (dispositivo): `flutter run -d <device_id> --release`
-- iOS: `flutter run -d ios`
-- Web (debug): `flutter run -d chrome` ou `flutter run -d edge`
-O Flutter abrira uma URL local (por exemplo http://127.0.0.1:51119) quando em modo web; utilize-a no navegador.
+===== 6.4 EXECUTAR O APLICATIVO =====
+- Android emulador: flutter run -d emulator-5554  
+- Android físico: flutter run -d <device_id> --release  
+- iOS: flutter run -d ios  
+- Web: flutter run -d chrome OU flutter run -d edge
 
-6.5 Testes rapidos do frontend
-```
+===== 6.5 TESTES RÁPIDOS =====
+--------------------------------------------
 flutter test
-```
-O projeto possui testes basicos em `frontend/test/services_test.dart` para validar chamadas de servicos.
+--------------------------------------------
+Testes em: frontend/test/services_test.dart
 
-7. Execucao integrada e URLs esperadas
-1. Suba o backend (Secao 5) e aguarde a mensagem `Application startup complete` no console.
-2. Suba o frontend (Secao 6) apontando para a mesma URL. 
-3. Fluxo minimo a validar:
-   - Na tela inicial selecione UF "SP" e cidade "Santos" e toque em "Ver risco".
-   - Abra o mapa aprimorado e altere os filtros de dia (+1, +2, +3) e intensidade (Baixo/Medio/Alto).
-4. URLs uteis durante a validacao:
-   - Backend API: http://localhost:8000
-   - Swagger: http://localhost:8000/docs
-   - App Web (quando rodando via `flutter run -d chrome`): URL mostrada pelo CLI
 
-8. Opcional: Execucao via Docker
-O repositorio contem `docker-compose.yaml` com dois servicos (backend e frontend). Atualize o caminho `context` do servico `frontend` para `./frontend` (o arquivo atual ainda aponta para ./mobile). Depois rode:
-```
+##############################
+7. EXECUÇÃO INTEGRADA
+##############################
+1. Suba o backend e aguarde “Application startup complete”.
+2. Suba o frontend apontando para a mesma URL.
+3. Fluxo mínimo:
+   - UF: "SP"
+   - Cidade: "Santos"
+   - Ação: "Ver risco"
+4. Teste o mapa com filtros (+1, +2, +3) e intensidade (Baixo/Médio/Alto).
+
+URLs úteis:
+--------------------------------------------
+Backend API: http://localhost:8000  
+Swagger: http://localhost:8000/docs  
+App Web (Chrome): URL gerada pelo Flutter CLI
+--------------------------------------------
+
+
+##############################
+8. OPCIONAL: EXECUÇÃO VIA DOCKER
+##############################
+Atualize o caminho do frontend no docker-compose.yaml para ./frontend.
+
+--------------------------------------------
 cp backend/.env.example backend/.env
-# preencha BRASIL_ABERTO_API_KEY se possuir
+# (Preencha BRASIL_ABERTO_API_KEY se possuir)
 FRONTEND_API_URL=http://backend:8000 docker compose up --build
-```
-Apos o build, o backend expora a porta 8000 e o frontend web ficara em http://localhost:8080.
+--------------------------------------------
 
-9. Solucao de problemas rapidos
-- Porta 8000 ja em uso: altere PORT no backend/.env e rode o Flutter com `--dart-define=API_URL=http://localhost:NOVA_PORTA`.
-- Timeout ao consultar cidades: confirme acesso a https://nominatim.openstreetmap.org e verifique se nao ha bloqueio de rede.
-- Erros SSL no macOS: execute `Install Certificates.command` dentro do diretorio do Python framework.
-- App Flutter nao encontra assets IBGE: garanta que o comando `flutter pub get` foi executado e que `frontend/assets/ibge` permanece dentro do projeto.
-- Erro de CORS em build web externo: defina a variavel `HOST=0.0.0.0` e utilize o mesmo IP no `API_URL`.
+Após o build:
+- Backend → porta 8000  
+- Frontend Web → http://localhost:8080
 
-Este manual garante os mesmos passos usados pelo grupo para preparar e rodar o AlagAlert localmente. Em caso de duvidas, consulte o README principal para contexto adicional.
+
+##############################
+9. SOLUÇÃO DE PROBLEMAS RÁPIDOS
+##############################
+- Porta 8000 em uso → altere PORT no backend/.env  
+- Timeout cidades → verifique acesso a nominatim.openstreetmap.org  
+- SSL macOS → execute “Install Certificates.command” no diretório Python  
+- Erros de assets → rode `flutter pub get` novamente  
+- Erro de CORS → defina HOST=0.0.0.0 e use o mesmo IP no API_URL
+
+
+============================================================
+Este manual garante os mesmos passos usados pelo grupo para 
+preparar e rodar o AlagAlert localmente.
+Em caso de dúvidas, consulte o README principal.
+============================================================
