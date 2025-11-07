@@ -7,7 +7,7 @@ Sistema distribuído para previsão de risco de alagamentos em cidades brasileir
 O **AlagAlert** é uma aplicação desenvolvida como parte da disciplina **Desenvolvimento de Sistemas Distribuídos (UNIP)**.
 
 O sistema consiste em:
-- **App mobile (Flutter)** → interface para consulta do risco de alagamentos por cidade/UF.
+- **App frontend (Flutter)** → interface para consulta do risco de alagamentos por cidade/UF.
 - **API intermediária (FastAPI)** → coleta dados de previsão meteorológica, geocodificação e processa riscos.
 - **APIs externas** → serviços de clima (Open-Meteo) e mapas (Nominatim).
 
@@ -76,7 +76,7 @@ O sistema consiste em:
 - Python 3.13.9
 - pip
 
-### Mobile
+### Frontend
 - Flutter 3.35.7 (Dart 3.9.2)
 - Android Studio / Xcode (para emuladores)
 
@@ -113,14 +113,14 @@ Documentação Swagger: `http://localhost:8000/docs`
 export HOST=0.0.0.0
 export PORT=8000
 export RATE_LIMIT=60/minute
-export OPEN_METEO_URL=https://api.open-meteo.com/v1/forecast
+export BRASIL_ABERTO_API_KEY=SUA_CHAVE_AQUI
 ```
 
-### Mobile (Flutter)
+### Frontend (Flutter)
 
 ```bash
-# Entre na pasta do mobile
-cd mobile
+# Entre na pasta do frontend
+cd frontend
 
 # Instale as dependências
 flutter pub get
@@ -128,7 +128,7 @@ flutter pub get
 # Execute no emulador/dispositivo
 flutter run
 
-# Para definir a URL da API (padrão: http://191.252.193.10:8000)
+# Para definir a URL da API (padrão: http://localhost:8000)
 flutter run --dart-define=API_URL=http://localhost:8000
 ```
 
@@ -149,10 +149,10 @@ flutter build web --release --dart-define=API_URL=https://sua-api.com
 
 ## 🧪 Testes
 
-### Mobile
+### Frontend
 
 ```bash
-cd mobile
+cd frontend
 flutter test
 ```
 
@@ -359,7 +359,7 @@ alagAlert/
 │   ├── requirements.txt
 │   └── tools/
 │       └── add_cities.py
-├── mobile/
+├── frontend/
 │   ├── lib/
 │   │   ├── main.dart
 │   │   ├── models/
